@@ -53,8 +53,7 @@ namespace console
 
     void Console::log(const char *fmt, ...)
     {
-        if (!serial)
-            return;
+        if (!serial) return;
 
         va_list ptr;
         va_start(ptr, fmt);
@@ -66,8 +65,7 @@ namespace console
 
     void Console::format(const char *fmt, ...)
     {
-        if (!serial)
-            return;
+        if (!serial) return;
 
         size_t length = strlen(mBuffer);
         char *npos = mBuffer + length;
@@ -79,22 +77,22 @@ namespace console
         va_end(args);
     }
 
-    void Console::flush()
+    void Console::flush(const char *prefix)
     {
-        if (!serial)
-            return;
+        if (!serial) return;
 
         if (strlen(mBuffer) > 0)
         {
+            serial->print(prefix);
             serial->println(mBuffer);
+            serial->flush();
             mBuffer[0] = '\0';
         }
     }
 
     void Console::vformat(const char *fmt, va_list args)
     {
-        if (!serial)
-            return;
+        if (!serial) return;
 
         size_t length = strlen(mBuffer);
         char *npos = mBuffer + length;
@@ -127,9 +125,9 @@ namespace console
         va_end(args);
     }
 
-    void flush()
+    void flush(const char *prefix)
     {
-        Console::getInstance().flush();
+        Console::getInstance().flush(prefix);
     }
 
 } // namespace

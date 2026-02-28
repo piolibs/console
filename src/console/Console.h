@@ -12,46 +12,110 @@
 #include <Arduino.h>
 
 // Log levels
+
+#define LOG_LEVEL_VERBOSE 5
 #define LOG_LEVEL_DEBUG 4
-#define LOG_LEVEL_WARNING 3
-#define LOG_LEVEL_INFO 2
+#define LOG_LEVEL_INFO 3
+#define LOG_LEVEL_WARNING 2
 #define LOG_LEVEL_ERROR 1
 #define LOG_LEVEL_NONE 0
 
-// Base log macro
-#define _LOG(...) console::Console::getInstance().log(__VA_ARGS__)
-
-// Conditional logging macros
-#if LOG_LEVEL >= LOG_LEVEL_ERROR
-#define LOG_E(...) _LOG(__VA_ARGS__)
-#else
-#define LOG_E(...)
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LOG_LEVEL_INFO
 #endif
 
-#if LOG_LEVEL >= LOG_LEVEL_INFO
-#define LOG_I(...) _LOG(__VA_ARGS__)
+#ifndef LOG_MODULE
+#define LOG_MODULE
+#endif
+
+// Helper macros
+
+#define _LOG_TAG_1(level) "[" level "]"
+#define _LOG_TAG_2(level, module) "[" level "][" module "]"
+
+#define _LOG_TAG_SELECT(_1, _2, NAME, ...) NAME
+#define _LOG_TAG_EXPAND(level, ...) \
+    _LOG_TAG_SELECT(level __VA_OPT__(, ) __VA_ARGS__, _LOG_TAG_2, _LOG_TAG_1) \
+                   (level __VA_OPT__(, ) __VA_ARGS__)
+#define _LOG_TAG(level) _LOG_TAG_EXPAND(level, LOG_MODULE)
+
+#define LOGE_TAG _LOG_TAG("E")
+#define LOGW_TAG _LOG_TAG("W")
+#define LOGI_TAG _LOG_TAG("I")
+#define LOGD_TAG _LOG_TAG("D")
+#define LOGV_TAG _LOG_TAG("V")
+
+#define _CONSOLE_LOG(...) console::Console::getInstance().log(__VA_ARGS__)
+#define _CONSOLE_FORMAT(...) console::Console::getInstance().format(__VA_ARGS__)
+#define _CONSOLE_FLUSH(...) console::Console::getInstance().flush(__VA_ARGS__)
+
+// Conditional logging macros
+
+#if LOG_LEVEL >= LOG_LEVEL_ERROR
+#define LOGE(...) _CONSOLE_LOG(LOGE_TAG " " __VA_ARGS__)
+#define LOGE_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOGE_FLUSH() _CONSOLE_FLUSH(LOGE_TAG " ")
 #else
-#define LOG_I(...)
+#define LOGE(...) ((void)0)
+#define LOGE_ADD(...) ((void)0)
+#define LOGE_FLUSH() ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_WARNING
-#define LOG_W(...) _LOG(__VA_ARGS__)
+#define LOGW(...) _CONSOLE_LOG(LOGW_TAG " " __VA_ARGS__)
+#define LOGW_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOGW_FLUSH() _CONSOLE_FLUSH(LOGW_TAG " ")
 #else
-#define LOG_W(...)
+#define LOGW(...) ((void)0)
+#define LOGW_ADD(...) ((void)0)
+#define LOGW_FLUSH() ((void)0)
+#endif
+
+#if LOG_LEVEL >= LOG_LEVEL_INFO
+#define LOGI(...) _CONSOLE_LOG(LOGI_TAG " " __VA_ARGS__)
+#define LOGI_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOGI_FLUSH() _CONSOLE_FLUSH(LOGI_TAG " ")
+#else
+#define LOGI(...) ((void)0)
+#define LOGI_ADD(...) ((void)0)
+#define LOGI_FLUSH() ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_DEBUG
-#define LOG_D(...) _LOG(__VA_ARGS__)
+#define LOGD(...) _CONSOLE_LOG(LOGD_TAG " " __VA_ARGS__)
+#define LOGD_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOGD_FLUSH() _CONSOLE_FLUSH(LOGD_TAG " ")
 #else
-#define LOG_D(...)
+#define LOGD(...) ((void)0)
+#define LOGD_ADD(...) ((void)0)
+#define LOGD_FLUSH() ((void)0)
 #endif
 
-// For backward compatibility
-#if LOG_LEVEL >= LOG_LEVEL_INFO
-#define LOG(...) _LOG(__VA_ARGS__)
+#if LOG_LEVEL >= LOG_LEVEL_VERBOSE
+#define LOGV(...) _CONSOLE_LOG(LOGV_TAG " " __VA_ARGS__)
+#define LOGV_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOGV_FLUSH() _CONSOLE_FLUSH(LOGV_TAG " ")
 #else
-#define LOG(...)
+#define LOGV(...) ((void)0)
+#define LOGV_ADD(...) ((void)0)
+#define LOGV_FLUSH() ((void)0)
 #endif
+
+// Backward compatibility
+
+#if LOG_LEVEL >= LOG_LEVEL_INFO
+#define LOG(...) _CONSOLE_LOG(LOGI_TAG " " __VA_ARGS__)
+#define LOG_ADD(...) _CONSOLE_FORMAT(__VA_ARGS__)
+#define LOG_FLUSH() _CONSOLE_FLUSH(LOGI_TAG " ")
+#else
+#define LOG(...) ((void)0)
+#define LOG_ADD(...) ((void)0)
+#define LOG_FLUSH() ((void)0)
+#endif
+
+// Test environment
+
+#define TEST_LOG(...) _CONSOLE_LOG(__VA_ARGS__)
 
 namespace console
 {
@@ -104,11 +168,10 @@ namespace console
 
         /**
          * @brief Flush the internal buffer to serial output
-         *
-         * Prints the accumulated buffer content with newline
-         * and clears the buffer.
+         * @param prefix Optional string to prepend before the buffered content
+         *               (default: empty string)
          */
-        void flush();
+        void flush(const char *prefix = "");
 
         /**
          * @brief Print formatted message directly to serial
@@ -143,6 +206,6 @@ namespace console
 
     void log(const char *fmt, ...);
     void format(const char *fmt, ...);
-    void flush();
+    void flush(const char *prefix = "");
 
 } // namespace
