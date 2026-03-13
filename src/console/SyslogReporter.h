@@ -31,11 +31,12 @@ public:
     /**
      * @brief Send syslog message with priority
      * @param priority Syslog priority level
+     * @param tag String to prepend before the formatted message
      * @param fmt printf-style format string
      * @param ... Variable arguments
      * @return true if sent successfully, false if not initialized or send failed
      */
-    bool send(int priority, const char *fmt, ...);
+    bool send(int priority, const char *tag, const char *fmt, ...);
 
     SyslogReporter(const SyslogReporter&) = delete;
     SyslogReporter& operator=(const SyslogReporter&) = delete;

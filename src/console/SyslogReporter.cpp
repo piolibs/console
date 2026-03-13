@@ -32,7 +32,7 @@ SyslogReporter& SyslogReporter::init(const std::string &server, int port, const 
     return *this;
 }
 
-bool SyslogReporter::send(int priority, const char *fmt, ...)
+bool SyslogReporter::send(int priority, const char *tag, const char *fmt, ...)
 {
     WiFiUDP udp;
     char mBuffer[96];
@@ -42,16 +42,19 @@ bool SyslogReporter::send(int priority, const char *fmt, ...)
         return false;
     }
 
-    int size = snprintf(mBuffer, sizeof(mBuffer), "<%d> %s ", priority, mHostname.c_str());
-
-    va_list args;
-    va_start(args, fmt);
-    size += vsnprintf(mBuffer + size, sizeof(mBuffer) - size, fmt, args);
-    va_end(args);
-
     if (udp.beginPacket(mServer.c_str(), mPort))
     {
+        int size = snprintf(mBuffer, sizeof(mBuffer), "<%u> %s %s ",
+                            priority, mHostname.c_str(), (tag) ? tag : "--");
+        udp.write((const uint8_t*)mBuffer, size);
+
+        va_list args;
+        va_start(args, fmt);
+        size = vsnprintf(mBuffer, sizeof(mBuffer), fmt, args);
+        va_end(args);
+
         udp.write((const uint8_t *)mBuffer, size);
+
         udp.endPacket();
 
         return true;

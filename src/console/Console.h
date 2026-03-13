@@ -41,28 +41,28 @@
                    (level __VA_OPT__(, ) __VA_ARGS__)
 #define _LOG_TAG(level) _LOG_TAG_EXPAND(level, LOG_MODULE)
 
-#define LOGE_TAG _LOG_TAG("E")
-#define LOGW_TAG _LOG_TAG("W")
-#define LOGI_TAG _LOG_TAG("I")
-#define LOGD_TAG _LOG_TAG("D")
-#define LOGV_TAG _LOG_TAG("V")
+#define LOG_LEVEL_ERROR_TAG   _LOG_TAG("E")
+#define LOG_LEVEL_WARNING_TAG _LOG_TAG("W")
+#define LOG_LEVEL_INFO_TAG    _LOG_TAG("I")
+#define LOG_LEVEL_DEBUG_TAG   _LOG_TAG("D")
+#define LOG_LEVEL_VERBOSE_TAG _LOG_TAG("V")
 
-#define _CONSOLE_LOG(level, ...) \
+#define _CONSOLE_LOG(LOG_LEVEL, ...) \
 do { \
-    console::SyslogReporter::getInstance().send(level, __VA_ARGS__); \
-    console::Console::getInstance().log(__VA_ARGS__); \
+    console::SyslogReporter::getInstance().send(LOG_LEVEL, LOG_LEVEL##_TAG, __VA_ARGS__); \
+    console::Console::getInstance().log(LOG_LEVEL##_TAG " ", __VA_ARGS__); \
 } while (false)
 
-#define _CONSOLE_FORMAT(level, ...) \
+#define _CONSOLE_FORMAT(LOG_LEVEL, ...) \
 do { \
     console::Console::getInstance().format(__VA_ARGS__); \
 } while(false)
 
-#define _CONSOLE_FLUSH(level, ...) \
+#define _CONSOLE_FLUSH(LOG_LEVEL) \
 do { \
     console::SyslogReporter::getInstance().send( \
-        level, console::Console::getInstance().getMessage()); \
-    console::Console::getInstance().flush(__VA_ARGS__); \
+        LOG_LEVEL, LOG_LEVEL##_TAG, console::Console::getInstance().getMessage()); \
+    console::Console::getInstance().flush(LOG_LEVEL##_TAG " "); \
 } while(false)
 
 #define _TEST_LOG(...) console::Console::getInstance().log(__VA_ARGS__)
@@ -70,9 +70,9 @@ do { \
 // Conditional logging macros
 
 #if LOG_LEVEL >= LOG_LEVEL_ERROR
-#define LOGE(...) _CONSOLE_LOG(LOG_LEVEL_ERROR, LOGE_TAG " " __VA_ARGS__)
+#define LOGE(...) _CONSOLE_LOG(LOG_LEVEL_ERROR, __VA_ARGS__)
 #define LOGE_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOGE_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_ERROR, LOGE_TAG " ")
+#define LOGE_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_ERROR)
 #else
 #define LOGE(...) ((void)0)
 #define LOGE_ADD(...) ((void)0)
@@ -80,9 +80,9 @@ do { \
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_WARNING
-#define LOGW(...) _CONSOLE_LOG(LOG_LEVEL_WARNING, LOGW_TAG " " __VA_ARGS__)
+#define LOGW(...) _CONSOLE_LOG(LOG_LEVEL_WARNING, __VA_ARGS__)
 #define LOGW_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOGW_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_WARNING, LOGW_TAG " ")
+#define LOGW_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_WARNING)
 #else
 #define LOGW(...) ((void)0)
 #define LOGW_ADD(...) ((void)0)
@@ -90,9 +90,9 @@ do { \
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_INFO
-#define LOGI(...) _CONSOLE_LOG(LOG_LEVEL_INFO, LOGI_TAG " " __VA_ARGS__)
+#define LOGI(...) _CONSOLE_LOG(LOG_LEVEL_INFO, __VA_ARGS__)
 #define LOGI_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOGI_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_INFO, LOGI_TAG " ")
+#define LOGI_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_INFO)
 #else
 #define LOGI(...) ((void)0)
 #define LOGI_ADD(...) ((void)0)
@@ -100,9 +100,9 @@ do { \
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_DEBUG
-#define LOGD(...) _CONSOLE_LOG(LOG_LEVEL_DEBUG, LOGD_TAG " " __VA_ARGS__)
+#define LOGD(...) _CONSOLE_LOG(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define LOGD_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define LOGD_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_DEBUG, LOGD_TAG " ")
+#define LOGD_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_DEBUG)
 #else
 #define LOGD(...) ((void)0)
 #define LOGD_ADD(...) ((void)0)
@@ -110,9 +110,9 @@ do { \
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_VERBOSE
-#define LOGV(...) _CONSOLE_LOG(LOG_LEVEL_VERBOSE, LOGV_TAG " " __VA_ARGS__)
+#define LOGV(...) _CONSOLE_LOG(LOG_LEVEL_VERBOSE, __VA_ARGS__)
 #define LOGV_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_VERBOSE, __VA_ARGS__)
-#define LOGV_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_VERBOSE, LOGV_TAG " ")
+#define LOGV_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_VERBOSE)
 #else
 #define LOGV(...) ((void)0)
 #define LOGV_ADD(...) ((void)0)
@@ -122,9 +122,9 @@ do { \
 // Backward compatibility
 
 #if LOG_LEVEL >= LOG_LEVEL_INFO
-#define LOG(...) _CONSOLE_LOG(LOG_LEVEL_INFO, LOGI_TAG " " __VA_ARGS__)
+#define LOG(...) _CONSOLE_LOG(LOG_LEVEL_INFO, __VA_ARGS__)
 #define LOG_ADD(...) _CONSOLE_FORMAT(LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_INFO, LOGI_TAG " ")
+#define LOG_FLUSH() _CONSOLE_FLUSH(LOG_LEVEL_INFO)
 #else
 #define LOG(...) ((void)0)
 #define LOG_ADD(...) ((void)0)
@@ -135,7 +135,7 @@ do { \
 
 #define TEST_LOG(...) \
 do { \
-    console::Console::getInstance().log(__VA_ARGS__); \
+    console::Console::getInstance().log(nullptr, __VA_ARGS__); \
 } while(false)
 
 namespace console
@@ -186,6 +186,16 @@ namespace console
         const char *getMessage() const;
 
         /**
+         * @brief Print formatted message directly to serial
+         * @param tag String to prepend before the formatted message
+         * @param fmt printf-style format string
+         * @param ... Variable arguments
+         *
+         * This is equivalent to format() + flush() in one call.
+         */
+        void log(const char *tag, const char *fmt, ...);
+
+        /**
          * @brief Append formatted text to the internal buffer
          * @param fmt printf-style format string
          * @param ... Variable arguments
@@ -194,19 +204,10 @@ namespace console
 
         /**
          * @brief Flush the internal buffer to serial output
-         * @param prefix Optional string to prepend before the buffered content
-         *               (default: empty string)
+         * @param tag Optional string to prepend before the buffered content
+         *            (default: empty string)
          */
-        void flush(const char *prefix = "");
-
-        /**
-         * @brief Print formatted message directly to serial
-         * @param fmt printf-style format string
-         * @param ... Variable arguments
-         *
-         * This is equivalent to format() + flush() in one call.
-         */
-        void log(const char *fmt, ...);
+        void flush(const char *tag = "");
 
         /**
          * @brief Append formatted text to the internal buffer
@@ -229,6 +230,8 @@ namespace console
     };
 
     // Console wrapper functions
+
+    Console& getInstance();
 
     void log(const char *fmt, ...);
     void format(const char *fmt, ...);

@@ -56,16 +56,16 @@ namespace console
         return mBuffer;
     }
 
-    void Console::log(const char *fmt, ...)
+    void Console::log(const char *tag, const char *fmt, ...)
     {
         if (!serial) return;
 
         va_list ptr;
         va_start(ptr, fmt);
-        vsnprintf(mBuffer, sizeof(mBuffer) - 1, fmt, ptr);
+        vsnprintf(mBuffer, sizeof(mBuffer), fmt, ptr);
         va_end(ptr);
 
-        this->flush();
+        this->flush(tag);
     }
 
     void Console::format(const char *fmt, ...)
@@ -74,7 +74,7 @@ namespace console
 
         size_t length = strlen(mBuffer);
         char *npos = mBuffer + length;
-        size_t remaining = sizeof(mBuffer) - length - 1;
+        size_t remaining = sizeof(mBuffer) - length;
 
         va_list args;
         va_start(args, fmt);
@@ -82,13 +82,13 @@ namespace console
         va_end(args);
     }
 
-    void Console::flush(const char *prefix)
+    void Console::flush(const char *tag)
     {
         if (!serial) return;
 
         if (strlen(mBuffer) > 0)
         {
-            serial->print(prefix);
+            serial->print((tag != nullptr) ? tag : "");
             serial->println(mBuffer);
             serial->flush();
             mBuffer[0] = '\0';
@@ -113,6 +113,11 @@ namespace console
     }
 
     // Console wrapper functions
+
+    Console& getInstance()
+    {
+        return console::Console::getInstance();
+    }
 
     void log(const char *fmt, ...)
     {
