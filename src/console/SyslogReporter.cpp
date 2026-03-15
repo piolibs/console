@@ -35,7 +35,7 @@ SyslogReporter& SyslogReporter::init(const std::string &server, int port, const 
 bool SyslogReporter::send(int priority, const char *tag, const char *fmt, ...)
 {
     WiFiUDP udp;
-    char mBuffer[96];
+    char mBuffer[160];
 
     if (!mInitialized || (WiFi.status() != WL_CONNECTED))
     {
